@@ -5,6 +5,7 @@
 #' output:
 #'     github_document
 #' ---
+#' MS note: command+Enter to run code chunks 
 
 #' Explore the cross-validation **inference algorithm** from scratch with the
 #' ants data and a polynomial model. Our goal is to predict richness of forest
@@ -36,8 +37,8 @@ forest_ants |>
 #' model formula syntax to train the model by minimizing the SSQ with the
 #' function `lm`.
 
-forest_ants$latitude_2 <- forest_ants$latitude ^ 2
-forest_ants$latitude_3 <- forest_ants$latitude ^ 3
+forest_ants$latitude_2 <- forest_ants$latitude ^ 2 # beta2, or latitude_2
+forest_ants$latitude_3 <- forest_ants$latitude ^ 3 # beta3, or latitude_3
 head(forest_ants)
 lm(richness ~ latitude + latitude_2 + latitude_3, data=forest_ants)
 
@@ -60,7 +61,9 @@ lm(richness ~ latitude + I(latitude^2) + I(latitude^3), data=forest_ants)
 #' An even more convenient way uses the function `poly()`, which creates a
 #' matrix of the polynomial terms.
 
-poly(forest_ants$latitude, degree=3, raw=TRUE)
+poly(forest_ants$latitude, degree=3, raw=TRUE) 
+# degree = 3 is controlling the degree of model flexibility 
+# raw=TRUE just means its a form of the algorithm which is the same as the funcion lm before it 
 
 #' We can use this directly within a model formula
 
@@ -82,6 +85,7 @@ cor(poly(forest_ants$latitude, degree=5, raw=TRUE))
 #' This problem can be markedly reduced by using orthogonal polynomials, which
 #' remove the correlation among the polynomial terms. Orthogonal polynomials are
 #' the default type for `poly()`.
+#' ### aka just remove the raw=true part 
 
 lm(richness ~ poly(latitude, degree=5), data=forest_ants)
 cor(poly(forest_ants$latitude, degree=5))
@@ -92,6 +96,13 @@ cor(poly(forest_ants$latitude, degree=5))
 #' it's best to choose the more robust parameterization.
 #' 
 
+### all just says we'll need to use a different form of the model ...? 
+### relatively small dataset, information content is not that great
+### polynomial model is not able to caputure the information 
+### can be improved by reparameterizing the model to capture more info 
+### called an orthagonal polynomial, each new term is mathmatically orthagonal to the previous one 
+
+
 #' R's `lm()` function contains a **training algorithm** that finds the
 #' parameters that minimize the sum of squared deviations of the data from the
 #' model. The following code trains the order 4 polynomial and plots the fitted
@@ -99,7 +110,7 @@ cor(poly(forest_ants$latitude, degree=5))
 #' polynomial. We can get up to order 16, after which we can no longer form
 #' orthogonal polynomials.
 
-order <- 4 #integer
+order <- 12 #integer ## flexibility of model comes from changing the integer, can change to 1,2,3 etc. eg.
 poly_trained <- lm(richness ~ poly(latitude, order), data=forest_ants)
 grid_latitude  <- seq(min(forest_ants$latitude), max(forest_ants$latitude), length.out=201)
 nd <- data.frame(latitude=grid_latitude)
@@ -112,6 +123,8 @@ ggplot(data=NULL, aes(x=latitude, y=richness)) +
     coord_cartesian(ylim=c(0,20)) +
     labs(title=paste("Polynomial order", order))
 
+### what form of the model gives us the optimal amount of wiggliness so that the model is good, accurately predicts new data 
+### we'll use cross validation model to determine the correct amount of wiggliness (flexibility)
 
 #' Use `predict` to ask for predictions from the trained polynomial model. For
 #' example, here we are asking for the prediction at latitude 43.2 and we find
