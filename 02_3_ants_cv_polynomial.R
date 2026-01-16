@@ -214,25 +214,26 @@ cv_poly_ants <- function(forest_ants, k, order) {
     forest_ants$partition <- random_partitions(nrow(forest_ants), k)
     e <- rep (NA, k)
     for ( i in 1:k ) { 
-    test_data <- subset(forest_ants, partition == i) 
-    train_data <- subset(forest_ants, partition != i) 
-    f_trained <- lm(richness ~ poly (latitude, order), data=train_data)
-    pred_richness <- predict(f_trained, newdata=test_data)
-    e[i] <- mean((test_data$richness - pred_richness) ^ 2)
+        test_data <- subset(forest_ants, partition == i) 
+        train_data <- subset(forest_ants, partition != i) 
+        f_trained <- lm(richness ~ poly (latitude, order), data=train_data)
+        pred_richness <- predict(f_trained, newdata=test_data)
+        e[i] <- mean((test_data$richness - pred_richness) ^ 2)
+    }
+    cv_error <- mean(e)
+    return(cv_error)
 }
-}
-
-#CV_error = mean(e) 
-cv_error <- mean(e)
-cv_error
 ## every time you run this cell block from ### you'll get a diff error number (e = MSE)! That's because its random. 
 
+cv_poly_ants(forest_ants, k=5, order=3)
 
 # set seed for random number generator, means i'll get same results as Brett
 set.seed(1193) #for reproducible results 
 
 grid <- expand.grid(k=c(5,10,nrow(forest_ants)), order=1.8 )
-cv_error <- rep(NA, nrow(grid) ) { # set up storage to keep cross-validation error 
+cv_error <- rep(NA, nrow(grid)) # set up storage to keep cross-validation error 
+for( i in 1:nrow(grid) ) {
     cv_error[i] <- cv_poly_ants(forest_ants, k=grid$k[i], order=grid$order)
 }
-result1 <- cbind(grid)
+result1 <- cbind(grid, cv_error)
+result1
