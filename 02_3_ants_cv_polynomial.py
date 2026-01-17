@@ -7,6 +7,11 @@
 # ants from latitude. What order of a polynomial **model algorithm** gives the
 # most accurate predictions?
 
+# For this script, you'll need to install the following packages:
+#     pandas numpy plotnine statsmodels scikit-learn
+# and be sure to pull or download the directory named `source` and its contents
+# from the class-materials repository (this contains the module `transforms`).
+
 import pandas as pd
 import numpy as np
 from plotnine import *
@@ -68,9 +73,11 @@ model.intercept_
 # predict for new X values using the `predict()` method. There is 12 lines of
 # code compared to the 6 lines of code in R.
 
-# The following code trains the order 4 polynomial and plots the trained
-# model. Use this block of code to try different values for the order of the
+# The following code trains the order 4 polynomial and plots the trained model.
+# Use this block of code to try different values for the order of the
 # polynomial. We can get up to order 21, which passes through every data point.
+# We need to first import the definition for Poly, which is in a custom Python
+# module within the source directory of the class-materials repository.
 
 from source.transforms import Poly
 
@@ -156,11 +163,11 @@ for i in range(k):
     ortho_poly = Poly(degree=order)
     train_X = ortho_poly.fit_transform(train_data['latitude'])
     train_y = train_data['richness']
-    poly_model = LinearRegression()
-    poly_model.fit(train_X, train_y)
+    f_trained = LinearRegression()
+    f_trained.fit(train_X, train_y)
 #   use f to predict for test dataset
     test_X = ortho_poly.transform(test_data['latitude'])
-    pred_richness = poly_model.predict(test_X)
+    pred_richness = f_trained.predict(test_X)
 #   e_i = prediction error (MSE)
     e[i] = np.mean((test_data['richness'] - pred_richness) ** 2)
 
@@ -188,11 +195,11 @@ def cv_poly_ants(forest_ants, k, order):
         ortho_poly = Poly(degree=order)
         train_X = ortho_poly.fit_transform(train_data['latitude'])
         train_y = train_data['richness']
-        poly_model = LinearRegression()
-        poly_model.fit(train_X, train_y)
+        f_trained = LinearRegression()
+        f_trained.fit(train_X, train_y)
     #   test
         test_X = ortho_poly.transform(test_data['latitude'])
-        pred_richness = poly_model.predict(test_X)
+        pred_richness = f_trained.predict(test_X)
     #   MSE
         e[i] = np.mean((test_data['richness'] - pred_richness) ** 2)
     cv_error = np.mean(e)
