@@ -20,7 +20,7 @@ library(tidyr) #for pivot_longer()
 #' Ant data:
 
 ants <- read.csv("data/ants.csv")
-head(ants)
+head(ants) # prints first 6 rows 
 
 #' Forest ant data:
 
