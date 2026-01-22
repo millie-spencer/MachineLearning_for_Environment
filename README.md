@@ -13,7 +13,7 @@ Pronouns: he, him, his
 * Text: [James et al. 2021](https://www.statlearning.com/) (2023 corrected version; both R and Python editions)
 * [Google Drive]() (TBA): anything not open access, collaborative notes etc
 * [Class recordings](https://www.dropbox.com/scl/fo/5qwqog14nxo53tgwc8ee2/AF-T8pBUjLwBkYxCgryFiSI?rlkey=tspkrv94e29sbhtfl3n6q23ce&st=vhsxcjvs&dl=0): password required, by request
-* [Piazza]() (TBA): help, questions, discussion
+* [Piazza](https://piazza.com/colorado/spring2026/ebio5460015/home): questions, discussion, coding help
 * [Zotero library](https://www.zotero.org/groups/5444970/machine_learning_ecology_2024/library): collection of papers
 
 This repository includes lecture slides (pdf), code, and homework instructions. For the most part, where code is concerned you want to view the markdown (`.md`) files in your web browser from GitHub.com. These markdown files are knitted from the R code. You can also run the R or Python code on your computer from the `.R` or `.py` files.

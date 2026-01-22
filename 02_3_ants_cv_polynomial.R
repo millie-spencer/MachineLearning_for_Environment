@@ -32,6 +32,9 @@ forest_ants |>
     geom_point(aes(x=latitude, y=richness)) +
     ylim(0,20)
 
+
+#' ### Model algorithm
+
 #' Here's one way we could code a 3rd order polynomial by first creating new
 #' variables for the quadratic (squared) and cubic (cubed) terms, and using R's
 #' model formula syntax to train the model by minimizing the SSQ with the
@@ -85,7 +88,6 @@ cor(poly(forest_ants$latitude, degree=5, raw=TRUE))
 #' This problem can be markedly reduced by using orthogonal polynomials, which
 #' remove the correlation among the polynomial terms. Orthogonal polynomials are
 #' the default type for `poly()`.
-#' ### aka just remove the raw=true part 
 
 lm(richness ~ poly(latitude, degree=5), data=forest_ants)
 cor(poly(forest_ants$latitude, degree=5))
@@ -96,19 +98,12 @@ cor(poly(forest_ants$latitude, degree=5))
 #' it's best to choose the more robust parameterization.
 #' 
 
-### all just says we'll need to use a different form of the model ...? 
-### relatively small dataset, information content is not that great
-### polynomial model is not able to caputure the information 
-### can be improved by reparameterizing the model to capture more info 
-### called an orthagonal polynomial, each new term is mathmatically orthagonal to the previous one 
-
-
 #' R's `lm()` function contains a **training algorithm** that finds the
 #' parameters that minimize the sum of squared deviations of the data from the
 #' model. The following code trains the order 4 polynomial and plots the fitted
 #' model. Use this block of code to try different values for the order of the
-#' polynomial. We can get up to order 16, after which we can no longer form
-#' orthogonal polynomials.
+#' polynomial. For this small dataset, we can get up to order 16, after which we
+#' can no longer form orthogonal polynomials.
 
 order <- 8 #integer ## flexibility of model comes from changing the integer, can change to 1,2,3 etc. eg.
 poly_trained <- lm(richness ~ poly(latitude, order), data=forest_ants)
@@ -133,11 +128,14 @@ ggplot(data=NULL, aes(x=latitude, y=richness)) +
 
 predict(poly_trained, newdata=data.frame(latitude=43.2))
 
+
+#' ### Inference algorithm
+
 #' Exploring the k-fold CV algorithm
 #'
 #' First, we need a function to divide the dataset up into partitions.
 
-# Function to divide a data set into random partitions for cross-validation
+# Function to divide a dataset into random partitions for cross-validation
 # n:       length of dataset (scalar, integer)
 # k:       number of partitions (scalar, integer)
 # return:  partition labels (vector, integer)
@@ -150,7 +148,7 @@ random_partitions <- function(n, k) {
     return(partitions)
 }
 
-#' What does the output of `random_partitions()` look like? It's a set of labels
+#' What does the output of `random_partitions()` produce? It's a set of labels
 #' that says which partition each data point belongs to.
 # nrow = number of datapoints is the number of rows (22) in the ants dataset
 random_partitions(nrow(forest_ants), k=5) #sets k = 5
@@ -166,74 +164,23 @@ random_partitions(nrow(forest_ants), k=nrow(forest_ants)) # sets k = 22
 #' Try 5-fold, 10-fold, and n-fold CV. Try different values for polynomial
 #' order.
 
-### pseudo code here from slides: 
-
 # divide dataset into k parts i = 1...k
-# initiate vector to hold e
+forest_ants$partition <- random_partitions(nrow(forest_ants), k)
+
+e <- rep(NA, k) # we'll need this to store the error from each test
+
 # for each i
+for ( i in 1:k ) {
 #     test dataset = part i
+    test_data <- subset(forest_ants, partition == i)
 #     training dataset = remaining data
+    train_data <- subset(forest_ants, partition != i)
 #     find f using training dataset
-#     use f to predict for test dataset 
+    f_trained <- lm(richness ~ poly(latitude, order), data=train_data)
+#     use f to predict for test dataset
+    pred_richness <- predict(f_trained, newdata=test_data)
 #     e_i = prediction error (MSE)
+    e[i] <- mean((test_data$richness - pred_richness) ^ 2)
+}
 # CV_error = mean(e)
 
-### translating pseudo code into R code now: 
-order <- 3 # degree of wigliness
-forest_ants$partition <- random_partitions(nrow(forest_ants), k) #divide dataset into k parts
-partition # prints partition to show the rows 
-
-e <- rep(NA, k)
-
-#for each i: 
-for ( i in 1:k ) { # creating our loop, for every i (test dataset) from 1:k 
-    test_data <- subset(forest_ants, partition == i) # returns subsets of vectors(in this case subsets of the forest ants data) which meet set conditions, here i)
-#     if you just run test_data you'll get 5 rows all of which belong to partition 1 
-    train_data <- subset(forest_ants, partition != i) # != means not equal to, running this shows all partitions that were not in i=1 (so all the rest of the data) get 22 rows? why not 22-5?
-#       find  using training dataset 
-    f_trained <- lm(richness ~ poly (latitude, order), data=train_data)
-#        use f to predict for test dataset 
-    pred_richness <- predict(f_trained, newdata=test_data)
-#       calculate e_i = prediction error (MSE)
-    e[i] <- mean((test_data$richness - pred_richness) ^ 2) #diff between observed data minus predicted data squared (MSE)
-    # run e to see what comes out for MSE
-    # find quite a bit of variability because its a small dataset 
-    # take sqrt of e and would get RMSE 
-}
-
-#CV_error = mean(e) 
-cv_error <- mean(e)
-cv_error
-## every time you run this cell block from ### you'll get a diff error number (e = MSE)! That's because its random. 
-
-
-### what degree of wigliness gives us the best accuracy? (changing order)
-# copy code from above and encapsulate it into a function 
-
-cv_poly_ants <- function(forest_ants, k, order) {
-    forest_ants$partition <- random_partitions(nrow(forest_ants), k)
-    e <- rep (NA, k)
-    for ( i in 1:k ) { 
-        test_data <- subset(forest_ants, partition == i) 
-        train_data <- subset(forest_ants, partition != i) 
-        f_trained <- lm(richness ~ poly (latitude, order), data=train_data)
-        pred_richness <- predict(f_trained, newdata=test_data)
-        e[i] <- mean((test_data$richness - pred_richness) ^ 2)
-    }
-    cv_error <- mean(e)
-    return(cv_error)
-}
-## every time you run this cell block from ### you'll get a diff error number (e = MSE)! That's because its random. 
-
-cv_poly_ants(forest_ants, k=5, order=3)
-
-# set seed for random number generator, means i'll get same results as Brett
-set.seed(1193) #for reproducible results 
-
-grid <- expand.grid(k=c(5,10,nrow(forest_ants)), order=1.8 )
-cv_error <- rep(NA, nrow(grid)) # set up storage to keep cross-validation error 
-for( i in 1:nrow(grid) ) {
-    cv_error[i] <- cv_poly_ants(forest_ants, k=grid$k[i], order=grid$order)
-}
-result1 <- cbind(grid, cv_error)
-result1
