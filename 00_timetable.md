@@ -9,8 +9,8 @@ Below are assignment due dates and a plan or record of the topics we covered eac
 | Assignment                       | Due             |
 | -------------------------------- | --------------- |
 | 1 (LOOCV)                        | Tue 27 Jan (Week 4) |
-| 2 (classification, KNN)          | The 5 Feb (Week 5)  |
-| 3 (decision trees, bagging)      | TBA (Week 7)    |
+| 2 (classification, KNN)          | Thu 5 Feb (Week 5)  |
+| 3 (decision trees, bagging)      | Thu 19 Feb (Week 7) |
 | 4 (boosting)                     | TBA (Week 9)    |
 | 5 (neural networks)              | TBA (Week 12)   |
 | Individual project presentations | TBA finals week |
