@@ -38,29 +38,31 @@ orbludat |>
 # x_new:   values of x variables at which to predict y (matrix, numeric)
 # k:       number of nearest neighbors to average (scalar, integer)
 # return:  predicted y at x_new (vector, character)
-#
-knn_classify2 <- function(x, y, x_new, k) {
-    category <- unique(y) #get the two category names
+
+#MS summary: This function takes training data (x and y), new data points to predict (x_new), and a number of neighbors (k), then returns predictions.
+
+knn_classify2 <- function(x, y, x_new, k) { #this defines the function with 4 inputs, training data predictors (x), categories (y) and new points where we want predictions (x_new), and k- how many nearest neighbors to use
+    category <- unique(y) #get the two category names (present and absent)
     y_int <- ifelse(y == category[1], 1, 0) #convert categories to integers
-    nx <- nrow(x)
-    n <- nrow(x_new)
-    c <- ncol(x_new)
-    p_cat1 <- rep(NA, n)
-    for ( i in 1:n ) {
+    nx <- nrow(x) #number of training data points
+    n <- nrow(x_new) #number of new points to predict 
+    c <- ncol(x_new) #number of predictor variables (for willow tit this is just 1 (elevation))
+    p_cat1 <- rep(NA, n) #create an empty vector to store probabilities for each new point
+    for ( i in 1:n ) { #start a loop that goes through each new point we want to predict, one at a time
     #   Distance of x_new to other x (Euclidean, i.e. sqrt(a^2+b^2+..))
-        x_new_m <- matrix(x_new[i,], nx, c, byrow=TRUE)
-        d <- sqrt(rowSums((x - x_new_m) ^ 2))
-    #   Sort y ascending by d; break ties randomly
-        y_sort <- y_int[order(d, sample(1:length(d)))]
+        x_new_m <- matrix(x_new[i,], nx, c, byrow=TRUE) #enables us to calculate distance from new point to number of training points all at once
+        d <- sqrt(rowSums((x - x_new_m) ^ 2)) #calculates distances from the new point to every training point using euclidean distance formula
+    #   Sort y ascending by distance (nearest to farthest); break ties randomly
+        y_sort <- y_int[order(d, sample(1:length(d)))] #arranges training labels (0s and 1s) from nearest to furthest neightbor
     #   Mean of k nearest y data (gives probability of category 1)
-        p_cat1[i] <- mean(y_sort[1:k])
+        p_cat1[i] <- mean(y_sort[1:k]) #calculates probability of new point being cat1 by averaging k nearest neighbors
     }
-    y_pred <- ifelse(p_cat1 > 0.5, category[1], category[2])
-    # Break ties if probability is equal (i.e. exactly 0.5)
-    rnd_category <- sample(category, n, replace=TRUE) #vector of random labels
-    tol <- 1 / (k * 10) #tolerance for checking equality
-    y_pred <- ifelse(abs(p_cat1 - 0.5) < tol, rnd_category, y_pred)
-    return(y_pred)
+    y_pred <- ifelse(p_cat1 > 0.5, category[1], category[2]) #converts probabilities to predictions (if p>0.5, predict category 1)
+    # Break ties if probability is equal (i.e. exactly 0.5). Whichever category is more likely wins.
+    rnd_category <- sample(category, n, replace=TRUE) #creates vector of random category labels for each prediction 
+    tol <- 1 / (k * 10) #tolerance for checking equality (if probability equals exactly 0.5) Tolerance depeds on K - smaller k means larger tolerance
+    y_pred <- ifelse(abs(p_cat1 - 0.5) < tol, rnd_category, y_pred) #handles ties (probability = 0.5) by chosing randomly
+    return(y_pred) # return the final prediction 
 }
 
 
