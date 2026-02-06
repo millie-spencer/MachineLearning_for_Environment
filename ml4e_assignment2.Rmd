@@ -1,106 +1,17 @@
-# Millie Spencer 
-# Assignment 2
+---
+title: "KNN Assignment (HW 2)"
+author: "Millie Spencer"
+output: html_document
+---
 
 **Due:** Thursday 05 Feb 3:30 PM
 
 **Grading criteria:** Answer all the questions completely (including all the check boxes). On time submission.
 
-
 ## Code a classification prediction task
 
-This example is a species distribution model. The goal of this assignment is to find the best performing KNN model to predict the presence or absence of the Willow Tit, a bird native to Switzerland, using elevation as a predictor. This data set is from Royle JA & Dorazio RM (2008) Hierarchical Modeling and Inference in Ecology, p 87. Elevation (altitude) data are from [USGS-EROS](https://www.usgs.gov/centers/eros). To focus on understanding how the KNN model algorithm expresses a nonlinear function of the predictors, we'll consider a single predictor variable.
-
-The data are in the `data` directory:
-
-```R
-library(ggplot2)
-library(dplyr)
-
-
-# Read in the data, code presence and absence as 1 and 0
-willowtit <- read.csv("data/wtmatrix.csv") |> 
-    mutate(status=ifelse(y.1==1, "present", "absent")) |> 
-    select(status, elev)
-head(willowtit)
-
-# Summary
-willowtit |> 
-    group_by(bin=cut(elev, breaks=seq(0, 3000, by=500), dig.lab=4), status) |> 
-    summarize(p=n()) 
-```
-
-To get you started on making a map, here is code to read in and plot elevation data (digital elevation model, DEM) for Switzerland.
-
-```R
-swissdem <- read.csv("data/switzerland_tidy.csv")
-
-ggplot(swissdem) +
-    geom_raster(aes(x=x, y=y, fill=Elev_m)) +
-    scale_fill_gradientn(colors=terrain.colors(22), name="Elevation (m)") + 
-    coord_quickmap() +
-    labs(title="Switzerland: DEM") +
-    theme_void() +
-    theme(plot.title=element_text(hjust=0.5, vjust=-2))
-```
-
-Here is how we could overlay the predicted presences of the Willow Tit on the DEM. First add a column to `swissdem` indicating the **predicted** presence/absence status. Call the column, say, `pred_status`. To provide working code *for illustration only*, I've hard coded an elevation range here just so we have a vector called `pred_status` to plot onto a map.
-
-```R
-swissdem <- swissdem |> 
-    mutate(pred_status=ifelse(Elev_m > 800 & Elev_m < 1200, "present", "absent"))
-```
-
-You wouldn't use this code at all! Instead, add a `pred_status` column of model predictions to `swissdem` containing the predicted presence-absence status (e.g. using `cbind()`).  To do that, you'll need to first feed the elevations in `swissdem` to the KNN model to make the predictions.
-
-Now add the predicted status using a `geom_tile()` layer to make an overlay. We can filter to just the presences so absences are blank, and use an `alpha` setting  of say, 0.6, for some transparency. The overlaid presences will appear in the map as a light shade of blue.
-
-```R
-ggplot() +
-    geom_raster(data=swissdem,
-                aes(x=x, y=y, fill=Elev_m)) +
-    scale_fill_gradientn(colors=terrain.colors(22), name="Elevation (m)") +
-    geom_tile(data=filter(swissdem, pred_status=="present"), 
-              aes(x=x, y=y), fill="blue", 
-              alpha=0.6) +
-    coord_quickmap() +
-    labs(title="Predicted distribution of Willow Tit in Switzerland") +
-    theme_void() +
-    theme(plot.title=element_text(hjust=0.5, vjust=-2))
-```
-
-You might try other color schemes. For example, `scale_fill_viridis_c()` with a pink overlay looks pretty good to me too.
-
-
-
-**Optional advanced ggplot for R:** The above default `ggplot` does not include a legend or color scale for presence-absence. There is a bit of extra work to add legends for both elevation and presence-absence. Here is one way of doing it using `scale_fill_manual()` and the package `ggnewscale`.
-
-```r
-library(ggnewscale)
-
-ggplot() +
-    geom_raster(data=swissdem,
-                aes(x=x, y=y, fill=Elev_m)) +
-    scale_fill_gradientn(colors=terrain.colors(22), name="Elevation (m)") +
-    new_scale_fill() +
-    geom_tile(data=filter(swissdem, status=="present"), 
-              aes(x=x, y=y, fill="Present"), 
-              alpha=0.6) +
-    scale_fill_manual(name="Willow Tit", 
-                      breaks=c("Present"), 
-                      values=c("Present"="blue")) +
-    coord_quickmap() +
-    labs(title="Predicted distribution of Willow Tit in Switzerland") +
-    theme_void() +
-    theme(plot.title=element_text(hjust=0.5, vjust=-2))
-```
-
-
-# Millie's work below: 
-**Q1\.** 
-
-# load libraries
-library(ggplot2)
-library(dplyr)
+This example is a species distribution model. The goal of this assignment is to find the best performing KNN model to predict the presence or absence of the Willow Tit, a bird native to Switzerland, using elevation as a predictor.
+```{r setup, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
 
@@ -138,8 +49,9 @@ knn_classify2 <- function(x, y, x_new, k) {
 elev_grid <- data.frame(
     elev = seq(min(willowtit$elev), max(willowtit$elev), length.out = 200) #grid ranging from lowest to highest elevation values, randomly picked 200
 )
-elev_grid
-
+```
+## Q1
+```{r q1-predictions}
 # Choose k values to explore
 k_values <- c(1, 3, 5, 10, 25, 50, 100)
 
@@ -164,7 +76,8 @@ for (k in k_values) { #loop through each k value
 
 all_predictions <- bind_rows(predictions_list) #binding rows basically stacks the dataframes being produced
 head(all_predictions) #print first 6 rows of predictions 
-
+```
+```{r q1-plot1, fig.width=10, fig.height=8}
 # Now visualize these predictions: 
 # x axis is elev, y is present/absent, make a plot for every k value 
 ggplot(all_predictions, aes(x = elev, y = predicted_status)) +
@@ -179,7 +92,8 @@ ggplot(all_predictions, aes(x = elev, y = predicted_status)) +
     # shows that willowtits are present at mid elevations mostly
     # absence at all elevations for lower k values, predictions appear throughout the range indicating high variance/noise
     # less absence at mid elevations for higher k values, clearer pattern emerges with mid elev showing consistent present predictions and low and high elevations showing absence. Smoothing effect of larger k 
-
+```
+```{r q1-plot2, fig.width=10, fig.height=8}
 # play with other plot formats, i think color helps with visualization
 ggplot(all_predictions, aes(x = elev, y = predicted_status, color = predicted_status)) +
     geom_jitter(height = 0.1, alpha = 0.6, size = 2, width = 0) +
@@ -193,11 +107,9 @@ ggplot(all_predictions, aes(x = elev, y = predicted_status, color = predicted_st
     ) +
     theme_minimal() +
     theme(legend.position = "bottom")
+```
 
-
-
-
-#############################
+## Q2
 
 **Q2.** Make a new function, called `knn_classify2_probs`, by modifying the `knn_classify2` function so that instead of returning a character vector of the predictions, it returns a numeric vector of the probabilities. To do this, you should work through the existing function line-by-line to understand its flow. Hint: the solution is to remove some lines of code. Also, the KNN function predicts the probability of `cat1`, which in this case could be absence, so be sure to include code that returns always (in the general case, not just this dataset) the probability of presence.
 
@@ -205,7 +117,7 @@ ggplot(all_predictions, aes(x = elev, y = predicted_status, color = predicted_st
 - [X] Use this function to form predicted probabilities for various values of `k_knn`. Visualize these predictions in a scatterplot of probability as a function of elevation. Specifically, make plots for `k_knn` = 1, 5, 25, 100.
 - [X] Describe how the shape of the function changes with `k_knn`.
 - [X] Comment on how the value of `k_knn` influences the flexibility of the function and it's likely bias and variance (i.e. consider the bias-variance tradeoff in the context of classification); e.g. one of these models is likely a better balance between bias and variance because it represents the prediction smoothly yet relatively closely.
-
+```{r q2-function}
 # updating KNN function so that it returns integers not categories
 knn_classify2_probs <- function(x, y, x_new, k) {
     category <- unique(y)  # Get the two category names
@@ -233,9 +145,7 @@ knn_classify2_probs <- function(x, y, x_new, k) {
         return(1 - p_cat1)  # If category[1] is "absent", flip the probability (aka always return the probability of presence)
     }
 }
-
-
-## Generate predictions for k = 1, 5, 25, 100
+```
 ```{r q2-predictions}
 # k values to explore
 k_values_prob <- c(1, 5, 25, 100)
@@ -261,7 +171,6 @@ for (k in k_values_prob) {
 # Combine all predictions
 prob_predictions <- bind_rows(prob_predictions_list)
 ```
-## Visualize probability vs elevation
 ```{r q2-visualization, fig.width=10, fig.height=8}
 ggplot(prob_predictions, aes(x = elev, y = prob_present)) +
     geom_point(alpha = 0.6, size = 2, color = "steelblue") +
@@ -277,28 +186,36 @@ ggplot(prob_predictions, aes(x = elev, y = prob_present)) +
     theme_minimal()
 ```
 
+### How the shape changes with k_knn
 
-## How the shape changes with k_knn
 With **k = 1**, doesnt show much, basically just 1s and 0s
+
 With **k = 5**, more of a pattern but pretty jagged 
+
 With **k = 25**, the function is much smoother, showing a clear curve of presence at mid elevations and absence and low and high. The transition from low to high probability is gradual, with peak probabilities occurring around 1500-1800m elevation. 
+
 With **k = 100**, the function is very smooth but becomes almost linear after the presence peak at mid latitudes (ie tapers off around 0.5 probability in high elevations). This looks less accurate to me than K=25. 
 
-## Bias-Variance Tradeoff
+### Bias-Variance Tradeoff
+
 **k = 1** exhibits extremely high variance and low bias (the predictions are all over the place, very jumpy). too sensitive to individual training points
+
 **k = 5** still shows high variance with a jagged pattern, though it's starting to reveal the general trend of mid-elevation presence (just a bit noisy). The model remains quite flexible and sensitive to individual training points, making it prone to overfitting, but less so than k=1.
+
 **k = 25** appears to strike the best balance between bias and variance because it represents the prediction smoothly yet relatively closely. The smooth curve clearly captures the biological pattern: willow tits prefer mid-elevations (peak around 1500-1800m) with gradual transitions to absence at both low and high elevations. This model is flexible enough to capture the non-linear relationship without being overly sensitive to individual data points or noise.
+
 **k = 100** exhibits low variance but higher bias. While very smooth and stable, the function becomes too simple, particularly visible in how it tapers off linearly around 0.5 probability at high elevations rather than dropping to zero. This suggests underfitting - the model is too constrained and misses important features of the true pattern, making it less accurate than k=25.
+
 Overall, **k = 25** provides the optimal balance, capturing the key elevation-presence relationship smoothly while remaining true to the data pattern.
 
-
-
-######
+## Q3
 
 **Q3.** Tune the KNN model algorithm using the CV inference algorithm. Specifically, using the original `knn_classify2` function, and based on the code in `classification_knn.R`, find the best predictive KNN model using 5, 10, and n-fold CV. Hint: be sure to search adequately across the possible range of `k_knn`. You want to see the error go down, and then go back up again. If the error is not obviously changing much, you've probably got more parameter space to explore.
+
 - [X] Comment on the stability of the CV plot for a single k-fold run, i.e. how does it vary across runs?
 - [X] Investigate a multiple replicate run of CV for 5, 10, and n-fold CV to stabilize the plot (this may take a while to run)
 - [X] What value of `k_knn` would you choose for good predictive performance? Justify your choice.
+```{r q3-setup}
 # Load the random_partitions function (from Brett's code) ("source/random_partitions.R")
 # Or just define it here:
 random_partitions <- function(n, k) {
@@ -306,11 +223,12 @@ random_partitions <- function(n, k) {
     partitions <- rep(1:k, length.out = n)
     sample(partitions)
 }
+```
+```{r q3-cv-function}
 # CV function for KNN on willow tit data - implement k-fold cross validation (CV) to estimate how well the knn model performs on new data 
 # split data into k chunks (folds), train on k-1 chunks, test on remaining 1 chunk
 # repeat k times so each chunk gets to be test once 
 # avg error across all k tests 
-
 
 #### Adapting Brett's orange/blue CV function for the willow tit: 
 # willowtit: willow tit dataset (dataframe w 237 rows) 
@@ -347,14 +265,14 @@ cat("Testing CV function:\n")
 cv_knn_willowtit(willowtit, k_cv = 5, k_knn = 10)  #returned 0.3 (30% error rate (70% accuracy))
 cv_knn_willowtit(willowtit, k_cv = 10, k_knn = 10) #returned 0.29
 cv_knn_willowtit(willowtit, k_cv = nrow(willowtit), k_knn = 10)  #(237-fold) LOOCV returned 0.295 
-
+```
+```{r q3-single-run}
 # Explore a range of k_knn values with different CV folds
 # Start with a wide range to find where error changes
 grid <- expand.grid(
     k_cv = c(5, 10, nrow(willowtit)),  # 5-fold, 10-fold, and LOOCV
     k_knn = 1:100  # Try k from 1 to 50 #now trying 1:100 to see more k values, see if errors increase again more clearly after low 
 )
-grid #each row is 1 CV test we'll run 
 
 cv_error <- rep(NA, nrow(grid))
 
@@ -364,14 +282,14 @@ for ( i in 1:nrow(grid) ) {
 }
 
 result_single <- cbind(grid, cv_error)
-result_single #prints cv_error for every combination of k_cv and k_knn
 
 # look for the minimum error
 result_single %>%
     group_by(k_cv) %>%
     slice_min(cv_error, n = 5)
 ### part 1 showed 25 was our optimal k value of the 4 options, while this is showing that actually something in the 30s is best (around 34/35)
-
+```
+```{r q3-single-plot, fig.width=10, fig.height=6}
 # Plot the result
 ggplot(result_single, aes(x = k_knn, y = cv_error, color = factor(k_cv))) +
     geom_line(linewidth = 1) +
@@ -386,7 +304,9 @@ ggplot(result_single, aes(x = k_knn, y = cv_error, color = factor(k_cv))) +
 ## from plot can interpret that lowest CV_error is around k=35 nearest neighbors
 ## error goes up to a max aroud k=11, then decreases to minimum around k=35, then increases again slightly (but mostly still lower than k<20). Kind of bottoms out so going to change 1:50 to 1:100 to try more k values 
 ## nice, now with k = 1:100 the errors very clearly increase at around k=75, min is still around k=35 
+```
 
+```{r q3-stability-check}
 # Run the same thing again with a different seed to see how stable it is
 # aka: If I partition the data differently, do I get similar results?
 set.seed(456)  # Different seed
@@ -397,8 +317,8 @@ for ( i in 1:nrow(grid) ) {
 }
 
 result_single2 <- cbind(grid, cv_error = cv_error2)
-result_single2
-
+```
+```{r q3-comparison-plot, fig.width=10, fig.height=6}
 # Compare both runs
 comparison <- data.frame(
     k_cv = rep(grid$k_cv, 2),
@@ -418,8 +338,8 @@ ggplot(comparison, aes(x = k_knn, y = cv_error, color = factor(k_cv), linetype =
     ) +
     theme_minimal()
 # Hard to tell with so many lines overlapping! But I think it shows that the two lines (runs - dotted vs solid) dont differ much, seem to track 
-
-
+```
+```{r q3-multiple-replicates, cache=TRUE}
 # Now: run 100 replicate CV runs to get a stable, averaged estimate of the CV error
 
 grid_stable <- expand.grid( #same grid as before 
@@ -452,15 +372,15 @@ result_stable <- cbind(grid_stable, cv_error_matrix)
 result_stable$mean_cv <- rowMeans(result_stable[, -(1:2)])
 
 cat("\n✓ Done!\n")
-
-# See the averaged results
-head(result_stable)
-
+```
+```{r q3-optimal-k}
 # Find the optimal k for each CV method
 result_stable %>%
     select(k_cv, k_knn, mean_cv) %>%
     group_by(k_cv) %>%
     slice_min(mean_cv, n = 5)
+```
+```{r q3-stable-plot, fig.width=10, fig.height=6}
 # Plot mean CV error vs k
 ggplot(result_stable, aes(x = k_knn, y = mean_cv, color = factor(k_cv))) +
     geom_line(linewidth = 1.2) +
@@ -475,15 +395,16 @@ ggplot(result_stable, aes(x = k_knn, y = mean_cv, color = factor(k_cv))) +
 
 ### LOOCV yieleded the lowest error value (22.4%) at a K of between 40-44. 10 fold had slightly better (lower) error than 5 fold. But not that different of an error or optimal k range. 
 ## LOOCV shows that around k=41-43 yielded lowest error value so thats what I'd pick. 
+```
 
-
+## Q4
 
 **Q4.** Visualize probability versus elevation for the best model.
 
 - [X] Comment on the shape of this relationship
 - [X] Color code the two categories (presence, absence) in this plot and add a horizontal line at probability = 0.5. From the plot, what is the approximate elevation range of predicted presence?
 - [X] Why are there no predicted presences below probability = 0.5?
-
+```{r q4-predictions}
 # Use the optimal k=41 to generate probabilities
 best_k <- 41
 
@@ -500,13 +421,11 @@ best_model_probs <- data.frame(
     prob_present = prob_best
 )
 
-head(best_model_probs)
-
 # Add a column for what the actual predictions would be (for coloring)
 best_model_probs <- best_model_probs %>%
     mutate(predicted = ifelse(prob_present > 0.5, "present", "absent"))
-head(best_model_probs)
-
+```
+```{r q4-visualization, fig.width=10, fig.height=6}
 # now visualize with color coding: 
 ggplot(best_model_probs, aes(x = elev, y = prob_present, color = predicted)) +
     geom_point(alpha = 0.7, size = 2.5) +
@@ -523,33 +442,25 @@ ggplot(best_model_probs, aes(x = elev, y = prob_present, color = predicted)) +
     ylim(0, 1) +
     theme_minimal() +
     theme(legend.position = "right")
+```
 
-#### answering qs for Q4: 
-# bell shaped curve - as elevation increases probability of finding the birds increases, finally crossing the 50% threshold at elevation around 1250m and peaking around 1700m, before decreasing again. Falls below 50% prob at about 2000m elevation, after which increasing elev. decreases probabilty of finding the birds. 
-# therefore predicted elevation range of presence is about 1250-2000m in elevation.
-# The probability of 0.5 is the decision boundary - it represents the point where presence and absence are equally likely. When probability < 0.5, it means that among the k=41 nearest neighbors, fewer than half (less than 20.5 out of 41) were labeled "present" in the training data. Therefore, the majority of neighbors vote for "absent", and that's what the model predicts.
+### Answering questions for Q4:
 
+Bell shaped curve - as elevation increases probability of finding the birds increases, finally crossing the 50% threshold at elevation around 1250m and peaking around 1700m, before decreasing again. Falls below 50% prob at about 2000m elevation, after which increasing elev. decreases probabilty of finding the birds. 
 
+Therefore predicted elevation range of presence is about 1250-2000m in elevation.
 
+The probability of 0.5 is the decision boundary - it represents the point where presence and absence are equally likely. When probability < 0.5, it means that among the k=41 nearest neighbors, fewer than half (less than 20.5 out of 41) were labeled "present" in the training data. Therefore, the majority of neighbors vote for "absent", and that's what the model predicts.
 
+## Q5
 
 **Q5.** Make a map of where the Willow Tit is predicted to be.
+```{r q5-load}
 # Load the Swiss elevation data (raster/grid data)
-swissdem <- read.csv("data/swissdem.csv")
-
-# Check what it looks like
-head(swissdem)
-str(swissdem)
-
-# visualize the elevation
-ggplot(swissdem) +
-    geom_raster(aes(x=x, y=y, fill=Elev_m)) +
-    scale_fill_gradientn(colors=terrain.colors(22), name="Elevation (m)") + 
-    coord_quickmap() +
-    labs(title="Switzerland: DEM") +
-    theme_void() +
-    theme(plot.title=element_text(hjust=0.5, vjust=-2))
-
+# swissdem <- read.csv("data/swissdem.csv")
+swissdem <- read.csv("data/switzerland_tidy.csv")
+```
+```{r q5-predict}
 # Generate real predictions using my best model (k=41)
 swiss_predictions <- knn_classify2(
     x = as.matrix(willowtit["elev"]),
@@ -560,20 +471,11 @@ swiss_predictions <- knn_classify2(
 
 # Add predictions to swissdem
 swissdem$pred_status <- swiss_predictions
+
 # Check it worked
 table(swissdem$pred_status)
-# Now make the map: 
-ggplot() +
-    geom_raster(data=swissdem,
-                aes(x=x, y=y, fill=Elev_m)) +
-    scale_fill_gradientn(colors=terrain.colors(22), name="Elevation (m)") +
-    geom_tile(data=filter(swissdem, pred_status=="present"), 
-              aes(x=x, y=y), fill="blue", 
-              alpha=0.6) +
-    coord_quickmap() +
-    labs(title="Predicted distribution of Willow Tit in Switzerland") +
-    theme_void() +
-    theme(plot.title=element_text(hjust=0.5, vjust=-2))
+```
+```{r q5-map-final, fig.width=10, fig.height=8}
 # color scheme is hard to read, try greyscale elev map and magenta for bird presence. also adding a legend:
 ggplot() +
     # Elevation in grayscale
@@ -600,5 +502,8 @@ ggplot() +
         legend.justification = c(1, 1),    # Anchor at top-right of legend box
         legend.background = element_rect(fill = "white", color = "black")
     )
-# Do the predictions make sense? Briefly describe why the spatial pattern of predictions in the map makes sense.
-## yes they make sense, seeing the magenta (birds probable) around mid elevations!
+```
+
+### Do the predictions make sense? 
+
+Yes they make sense, seeing the magenta (birds probable) around mid elevations!
