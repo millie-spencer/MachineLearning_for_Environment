@@ -117,7 +117,7 @@ for ( k in 1:K ) {
 }
 
 # output, layer 2, linear model
-f_x <- A %*% w2  + b2
+f_x <- A %*% w2  + b2 # gives us predicted species richness for each row in the input data 
 
 # return f(x); a redundant copy but mirrors our previous examples
 nn1_preds <- f_x
