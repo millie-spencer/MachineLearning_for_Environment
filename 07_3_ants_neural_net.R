@@ -1,14 +1,15 @@
 #' ---
 #' title: "Ant data: neural network"
 #' author: Brett Melbourne
-#' date: 27 Feb 2024
+#' date: 27 Feb 2024 (updated 19 Feb 2026)
 #' output:
 #'     github_document
 #' ---
 
 #' A single layer neural network, or feedforward network, illustrated with the
 #' ants data. We first hand code the model algorithm as a proof of
-#' understanding. Then we code the same model and train it using Keras.
+#' understanding. Then we code the same model and train it by mini-batch
+#' stochastic gradient descent using Keras.
 #' 
 
 #+ results=FALSE, message=FALSE, warning=FALSE
@@ -146,18 +147,15 @@ ants |>
 #' You'll need to install Python and Tensorflow to use the `keras` package. The
 #' `keras` package is an R interface to the Python Keras library, which in turn
 #' is an interface to the Python Tensorflow library, which in turn is an
-#' interface to Tensorflow (mostly C++)! See Assignment 4 for installation
-#' directions. The Python Keras library is widely used and the R functions and
-#' workflow closely mirror the Python functions and workflow, so what we'll
-#' learn in Keras for R largely applies to Keras for Python as well. See also
-#' the Python version of this script.
+#' interface to Tensorflow (mostly C++)! It's best to install these into a
+#' Python virtual environment, which can be done from within R. See Assignment 4
+#' for installation directions. The Python Keras library is widely used and the
+#' R functions and workflow closely mirror the Python functions and workflow, so
+#' what we'll learn in Keras for R largely applies to Keras for Python as well.
+#' See also the Python version of this script.
 #' 
 
-#+ warning=FALSE
-# If you have another conda environment as your R default, you will need the
-# following line before loading the keras library
-reticulate::use_condaenv(condaenv = "r-tensorflow")
-library(keras)
+library(keras3)
 
 #' First we'll set a random seed for reproducibility. The seed applies to R,
 #' Python, and Tensorflow. It will take a few moments for Tensorflow to get set
@@ -239,13 +237,15 @@ compile(modnn1, optimizer="rmsprop", loss="mse")
 
 fit(modnn1, xtrain, ytrain, epochs = 300, batch_size=4) -> history
 
-#' As it takes time to train these models, it's worth saving the model
-#' (Tensorflow format) and history (R format) so they they can be reloaded
-#' later. We can also load this saved model in Python or share with colleagues.
+#' As it takes time to train these models, it's worth saving the model (.keras
+#' archive) and history (R format) so they can be reloaded later. We can also
+#' load this saved model in the Python version of Keras or share with
+#' colleagues.
 
-# save_model_tf(modnn1, "07_3_ants_neural_net_files/saved/modnn1")
+# Ensure the "/saved" directory exists first
+# save_model(modnn1, "07_3_ants_neural_net_files/saved/modnn1.keras")
 # save(history, file="07_3_ants_neural_net_files/saved/modnn1_history.Rdata")
-modnn1 <- load_model_tf("07_3_ants_neural_net_files/saved/modnn1")
+modnn1 <- load_model("07_3_ants_neural_net_files/saved/modnn1.keras")
 load("07_3_ants_neural_net_files/saved/modnn1_history.Rdata")
 
 #' We can plot the history once training is done. If you have `ggplot2` loaded,
