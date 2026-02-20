@@ -11,7 +11,7 @@
 * Submit code and answers to questions as comments in the same script.
 * All code and text in one file please (i.e. not a separate file per question).
 * Please include all the produced plots along with your code. I don't want to run your code to make plots!! You may produce a report if you wish (e.g. markdown, html, pdf) but a script file plus plots is sufficient.
-* The filename should be `ml4e_assignment3.R` or `ml4e_assignment3.py`. This will help me find the assignments in your repository. Supplemental files should be named similarly (e.g. `ml4e_assignment3_plot1.R`.
+* The filename should be `ml4e_assignment3.R` or `ml4e_assignment3.py`. This will help me find the assignments in your repository. Supplemental files should be named similarly (e.g. `ml4e_assignment3_plot1.png`.
 
 **Push your files to your GitHub repository**
 
