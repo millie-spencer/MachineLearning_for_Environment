@@ -1,11 +1,12 @@
 Ant data: neural network
 ================
 Brett Melbourne
-27 Feb 2024
+27 Feb 2024 (updated 19 Feb 2026)
 
 A single layer neural network, or feedforward network, illustrated with
 the ants data. We first hand code the model algorithm as a proof of
-understanding. Then we code the same model and train it using Keras.
+understanding. Then we code the same model and train it by mini-batch
+stochastic gradient descent using Keras.
 
 ``` r
 library(ggplot2)
@@ -90,7 +91,7 @@ x <- grid_data |>
 n <- nrow(x)
 p <- ncol(x)
 
-# set K (number of nodes in the hidden layer)
+# set K
 K <- 5
 
 # set parameters (weights and biases)
@@ -144,3 +145,208 @@ ants |>
 ```
 
 ![](07_3_ants_neural_net_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+### Using Keras to fit neural networks
+
+Now we’ll consider the very same model with Keras, including training
+the model on the data to determine the weight and bias parameters.
+
+You’ll need to install Python and Tensorflow to use the `keras` package.
+The `keras` package is an R interface to the Python Keras library, which
+in turn is an interface to the Python Tensorflow library, which in turn
+is an interface to Tensorflow (mostly C++)! It’s best to install these
+into a Python virtual environment, which can be done from within R. See
+Assignment 4 for installation directions. The Python Keras library is
+widely used and the R functions and workflow closely mirror the Python
+functions and workflow, so what we’ll learn in Keras for R largely
+applies to Keras for Python as well. See also the Python version of this
+script.
+
+``` r
+library(keras3)
+```
+
+First we’ll set a random seed for reproducibility. The seed applies to
+R, Python, and Tensorflow. It will take a few moments for Tensorflow to
+get set up.
+
+``` r
+tensorflow::set_random_seed(5574)
+```
+
+Next, prepare the data (the predictors are prepared exactly as we did
+for the hand-coded version above):
+
+``` r
+xtrain <- ants |> 
+    mutate(latitude = (latitude - lat_mn) / lat_sd,
+           elevation = (elevation - ele_mn) / ele_sd,
+           bog = ifelse(habitat == "bog", 1, 0),
+           forest = ifelse(habitat == "forest", 1, 0)) |>    
+    select(latitude, bog, forest, elevation) |>     #drop richness & habitat
+    as.matrix()
+
+ytrain <- ants[,"richness"]
+```
+
+Next, specify the model. The basic syntax builds the model layer by
+layer, using the pipe operator to express the flow of information from
+the output of one layer to the input of the next. Here,
+`keras_model_sequential()` says we will build a sequential (or
+feedforward) network and the input layer will have `ncol(xtrain)` units
+(i.e. there will be one input unit, or node, for each of the 4 predictor
+columns in our ant data). The next layer, a hidden layer, will be a
+densely-connected layer (i.e. all units from the previous layer
+connected to all units of the hidden layer) with 5 units, and it will be
+passed through the ReLU activation function. The output layer will be
+another densely-connected layer with 1 unit and no activation applied.
+
+``` r
+modnn1 <- keras_model_sequential(input_shape = ncol(xtrain)) |>
+    layer_dense(units = 5) |>
+    layer_activation("relu") |> 
+    layer_dense(units = 1)
+```
+
+We can check the configuration:
+
+``` r
+modnn1
+```
+
+    ## Model: "sequential"
+    ## ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+    ## ┃ Layer (type)                      ┃ Output Shape             ┃       Param # ┃
+    ## ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+    ## │ dense (Dense)                     │ (None, 5)                │            25 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ activation (Activation)           │ (None, 5)                │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ dense_1 (Dense)                   │ (None, 1)                │             6 │
+    ## └───────────────────────────────────┴──────────────────────────┴───────────────┘
+    ##  Total params: 31 (124.00 B)
+    ##  Trainable params: 31 (124.00 B)
+    ##  Non-trainable params: 0 (0.00 B)
+
+The model and layer names, such as “dense_1” and “activation” are names
+given to the objects created in the tensorflow workspace for this R
+session. We see that layer 1 has 25 parameters as we expect (5x4 weights
+and 5 biases) and the output layer has 6 parameters as we expect (5
+weights and 1 bias). This model thus has a total of 31 parameters.
+
+Next, compile the model. We are specifying that the optimizer algorithm
+is RMSprop and the loss function is mean squared error. Notice that we
+are not modifying the R `modnn1` object but are instead directing Keras
+in Python to set up for training the model.
+
+``` r
+compile(modnn1, optimizer="rmsprop", loss="mse")
+```
+
+The RMSprop algorithm is the default in Keras and works for most models.
+It implements stochastic gradient descent with an adaptive learning rate
+and various performance enhancements. By default, the initial learning
+rate is 0.001 (see `?optimizer_rmsprop`) but this can be tuned. Other
+optimizers are available.
+
+Now train the model, keeping a copy of the training history. Again, we
+are not getting a new R fitted-model object out of this as we would in,
+say, a call to `fit()` with an `lm` object but instead we are directing
+Keras in Python to train the model (all the important output remains in
+Python data structures). The history object is a by-product of training,
+so I put it on the right-hand side of the expression to be clear that
+this is a by-product and not a traditional R fitted-model object (where
+you would usually expect to find the trained parameter values). In one
+epoch, the training data are sampled in batches (one SGD step is taken
+for each batch) until all of the data have been sampled, so the number
+of epochs is the number of complete iterations through the training
+data. I chose 300 epochs because the fit improves only slowly beyond
+that. Here I used a batch size of 4, which means 10% of the data are
+used on each subsample to calculate the stochastic gradient descent
+step. Training will take a minute or so and a plot will chart its
+progress.
+
+``` r
+fit(modnn1, xtrain, ytrain, epochs = 300, batch_size=4) -> history
+```
+
+As it takes time to train these models, it’s worth saving the model
+(.keras archive) and history (R format) so they can be reloaded later.
+We can also load this saved model in the Python version of Keras or
+share with colleagues.
+
+``` r
+# Ensure the "/saved" directory exists first
+# save_model(modnn1, "07_3_ants_neural_net_files/saved/modnn1.keras")
+# save(history, file="07_3_ants_neural_net_files/saved/modnn1_history.Rdata")
+modnn1 <- load_model("07_3_ants_neural_net_files/saved/modnn1.keras")
+load("07_3_ants_neural_net_files/saved/modnn1_history.Rdata")
+```
+
+We can plot the history once training is done. If you have `ggplot2`
+loaded, it will create a ggplot, otherwise it will create a base plot.
+
+``` r
+plot(history, smooth=FALSE, theme_bw=TRUE)
+```
+
+![](07_3_ants_neural_net_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+We want to see the training error (RMS) decline to a reasonable level.
+Although the error will continue to go down, here we see it leveling out
+somewhat at about RMS=7, which is an absolute error of sqrt(7) = +/- 2.6
+species.
+
+Make predictions for our grid of new predictor variables (`x`; we made
+this earlier, scaling by the mean and sd of the data) and plot the
+fitted model with the data. This plot is exactly the same as the one we
+produced earlier “by hand” since they are the same model.
+
+``` r
+npred <- predict(modnn1, x)
+```
+
+    ## 641/641 - 0s - 417us/step
+
+``` r
+preds <- cbind(grid_data, richness=npred)
+ants |> 
+    ggplot() +
+    geom_line(data=preds, 
+              aes(x=latitude, y=richness, col=elevation,
+                  group=factor(elevation)),
+              linetype=2) +
+    geom_point(aes(x=latitude, y=richness, col=elevation)) +
+    facet_wrap(vars(habitat)) +
+    scale_color_viridis_c() +
+    theme_bw()
+```
+
+![](07_3_ants_neural_net_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+We can get the weights and biases, returned as a list
+
+``` r
+get_weights(modnn1)
+```
+
+    ## [[1]]
+    ##              [,1]      [,2]       [,3]       [,4]       [,5]
+    ## [1,] -0.260137022 0.3447710  0.1357387 -0.8827850 -0.9163154
+    ## [2,] -0.420628875 0.8042230 -0.1681570 -0.3340401  0.8117811
+    ## [3,]  0.005282341 0.6544323  1.4205852  1.6477803  1.2242957
+    ## [4,] -0.022078665 0.6350342 -0.7201059 -0.3404309 -0.7016663
+    ## 
+    ## [[2]]
+    ## [1] -0.2854277  0.3105494  0.8559497  0.7010938  0.7594435
+    ## 
+    ## [[3]]
+    ##            [,1]
+    ## [1,] -0.4019816
+    ## [2,]  0.6323590
+    ## [3,]  0.8664528
+    ## [4,]  1.6133058
+    ## [5,]  0.9751062
+    ## 
+    ## [[4]]
+    ## [1] 0.8399778
