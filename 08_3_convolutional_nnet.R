@@ -36,33 +36,33 @@ load("data_large/cifar56eco.RData")
 #' For `x_train` we have 28000 images, each 32 x 32 pixels in 3 channels (RGB),
 #' arranged in a 4D array. Pixel values range from 0-255.
 
-dim(x_train)
+dim(x_train) # prints 28000 (number of images), 32 32 3 (red, green, blue values for each pixel, values range from 0 to 255 representing color intensity)
 class(x_train)
 range(x_train)
 hist(sample(x_train, 5000))
 
-#' For `x_test`, we have 5600 images.
+#' For `x_test`, we have 5600 images, fewer than the 28,000 for training (roughly 20% is a standard split for train test).
 
-dim(x_test)
+dim(x_test) 
 
 #' For y we have integers coding for 56 categories arranged in a 2D array (1
 #' column matrix). Integers range from 0 to 55. Indexing starts at zero in
 #' Python and tensorflow.
 
-dim(y_train)
+dim(y_train) #vector, 1 columnm, 28,000 rows. set up as a matrix (first dimension is rows, second is column)
 class(y_train)
-head(y_train)
-sort(unique(y_train)) #56 ecological categories
+head(y_train) #first 6 values in ytrain are intigers (7, 12, 14..) which correspond to the image (e.g. that image is category 7 - lookup table shows that's a tiger for example)
+sort(unique(y_train)) #56 ecological categories (labeled by the integers starting at 0 going to 55, offset indixing (first element is 0 not 1))
 
 #' For `eco_labels` we have a dataframe containing the category names associated
 #' with the integer class codes
 
-eco_labels
+eco_labels # bear, bever, bee.... 
 
 #' Data preparation 1: convert image data to 0-1 scale.
 
-x_train <- x_train / 255
-x_test <- x_test / 255
+x_train <- x_train / 255 #just rescaling the numbers to make them smaller (0-1)
+x_test <- x_test / 255 #ibid
 
 #' Data preparation 2: convert integer response to a dummy variable matrix
 #' suitable for keras/tensorflow. We'll use the `to_categorical()` function from
@@ -73,7 +73,7 @@ y_train <- to_categorical(y_train, 56)
 
 #' The result is a matrix with 56 columns, 1 column for each category of
 #' organism.
-
+# vector to matrix, still 28.000 rows but now there's 56 columns 
 class(y_train)
 dim(y_train)
 
@@ -110,7 +110,10 @@ plot(as.raster(x_train[175,,,2]))
 text(0, 30, "green channel", col="white", pos=4)
 plot(as.raster(x_train[175,,,3]))
 text(0, 30, "blue channel", col="white", pos=4)
-
+#four images: one thats color and the rest are R, G, and B individually 
+#each image is 32x32 pixels. each pixel has a value from 0-255. 
+#for my glacier work, may have more dimensions in my array (eg infrared, near infrared, SWIR), other bands to add potentially 
+#values of the pixels are plotted in this image 
 
 #' Now we'll set up the model. Define the CNN architecture illustrated in the
 #' slides. The input layer is a 32 x 32 x 3 array. The output layer is the
