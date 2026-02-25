@@ -119,11 +119,12 @@ text(0, 30, "blue channel", col="white", pos=4)
 #' slides. The input layer is a 32 x 32 x 3 array. The output layer is the
 #' probability in each of the 56 categories.
 
+# keras model, sequential type, first layer is a 2d convoluntional layer
 modcnn1 <- keras_model_sequential(input_shape=c(32,32,3)) |>
 #   1st convolution-pool layer sequence
-    layer_conv_2d(filters=6, kernel_size=c(2,2), padding="same") |>
-    layer_activation_relu() |> 
-    layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_conv_2d(filters=6, kernel_size=c(2,2), padding="same") |> #apply 6 filters, kernel is 2x2, give it some padding so that the output layer is the same size as the input 
+    layer_activation_relu() |> #relu activation -- apply an operation [g(z)] (non linear activation function) to each node [z]
+    layer_max_pooling_2d(pool_size=c(2,2)) |> #max pooling operation 
 #   2nd convolution-pool layer sequence    
     layer_conv_2d(filters=12, kernel_size=c(2,2), padding="same") |> 
     layer_activation_relu() |> 
@@ -140,7 +141,7 @@ modcnn1 <- keras_model_sequential(input_shape=c(32,32,3)) |>
 
 #' Check the architecture
 
-modcnn1
+modcnn1 # gives us a table with all the layers and parameters, matrix shape 
 
 #' We see that the model has about 23,000 parameters. For example, in the first
 #' convolutional layer we have 6 filters, each 2x2, for each of the 3 input
@@ -173,13 +174,15 @@ compile(modcnn1, loss="categorical_crossentropy", optimizer="rmsprop",
 
 fit(modcnn1, x_train, y_train, epochs=60, batch_size=128, 
     validation_split=0.2) -> history
+# as it runs, accuracy goes up and the loss goes down! 
+# futher splits the training data (validation split), excluding some data so we can see how the training process is going throughout
 
 #' Save the model or load previously trained model. The first time you save the
 #' model you'll need to set up the directories before running the following
 #' code.
 
 # save_model(modcnn1, "08_3_convolutional_nnet_files/saved/modcnn1.keras")
-# save(history, file="08_3_convolutional_nnet_files/saved/modcnn1_history.Rdata")
+save(history, file="08_3_convolutional_nnet_files/saved/modcnn1_history.Rdata")
 modcnn1 <- load_model("08_3_convolutional_nnet_files/saved/modcnn1.keras")
 load("08_3_convolutional_nnet_files/saved/modcnn1_history.Rdata")
 
@@ -189,10 +192,12 @@ load("08_3_convolutional_nnet_files/saved/modcnn1_history.Rdata")
 #' impressive!
 
 plot(history, smooth=FALSE)
-
+# out of sample accuracy is the difference between the training accuracy and loss 
+#state of the art is getting ~99% accuracy 
 
 #' Can we do better with a larger neural network? We'll try more layers, more
 #' filters, bigger filters, and regularization.
+#' sometimes you make things worse by training the model more - will see below with larger model 
 
 tensorflow::set_random_seed(8424)
 
