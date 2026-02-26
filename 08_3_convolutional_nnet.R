@@ -1,7 +1,7 @@
 #' ---
 #' title: "Convolutional neural network"
 #' author: Brett Melbourne
-#' date: 04 Mar 2024 (updated 23 Feb 2026)
+#' date: 04 Mar 2024 (updated 26 Feb 2026)
 #' output:
 #'     github_document
 #' ---
@@ -79,10 +79,12 @@ dim(y_train)
 
 #' Looking at some portions of the matrix (upper left 6x14; row 1) we see we
 #' have rows of zeros and ones, with a 1 in the column that represents the
-#' category of the organism in the image.
+#' category of the organism in the image. In row 1, column 8 has a 1, which says
+#' that the image is category 7 (because of the offset indexing;
+#' column 1 is category 0), i.e. "cattle".
 
-y_train[1:6,1:14] 
-y_train[1,] 
+y_train[1:6,1:14]
+y_train[1,]
 
 #' There are 500 images in each category, so this a balanced training set.
 
@@ -119,16 +121,16 @@ text(0, 30, "blue channel", col="white", pos=4)
 modcnn1 <- keras_model_sequential(input_shape=c(32,32,3)) |>
 #   1st convolution-pool layer sequence
     layer_conv_2d(filters=6, kernel_size=c(2,2), padding="same") |>
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |>
 #   2nd convolution-pool layer sequence    
     layer_conv_2d(filters=12, kernel_size=c(2,2), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
 #   3rd convolution-pool layer sequence    
     layer_conv_2d(filters=24, kernel_size=c(2,2), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
 #   Flatten (384 nodes)
     layer_flatten() |>
 #   Dense connection to output layer with softmax (56 categories to predict)    
@@ -162,9 +164,13 @@ modcnn1
 compile(modcnn1, loss="categorical_crossentropy", optimizer="rmsprop",
         metrics="accuracy")
 
-#' Train the model using an 80/20 train/validate split to monitor progress. This
-#' will take about 2 to 15 minutes on CPU, or about 15 seconds on a single
-#' NVidia A100 GPU (e.g. on a CU Alpine compute node).
+#' Train the model using an 80/20 train/validate split. The purpose of splitting
+#' the training data here is to monitor training progress. Right at the
+#' beginning above, we held out a separate test set that will not be involved in
+#' training, which we'll use to measure out of sample accuracy. Training will
+#' take about 2 to 15 minutes on CPU (2s per epoch on my relatively fast
+#' laptop), or about 35 seconds on a single NVidia A100 GPU (e.g. on a CU Alpine
+#' compute node).
  
 #+ eval=FALSE
 
@@ -196,20 +202,20 @@ tensorflow::set_random_seed(8424)
 modcnn2 <- keras_model_sequential(input_shape=c(32,32,3)) |>
     #   1st convolution-pool layer sequence
     layer_conv_2d(filters=32, kernel_size=c(3,3), padding="same") |>
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
     #   2nd convolution-pool layer sequence    
     layer_conv_2d(filters=64, kernel_size=c(3,3), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
     #   3rd convolution-pool layer sequence    
     layer_conv_2d(filters=128, kernel_size=c(3,3), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
     #   4th convolution-pool layer sequence
     layer_conv_2d(filters=256, kernel_size=c(3,3), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |>
     #   Flatten with dropout regularization
     layer_flatten() |>
     layer_dropout(rate=0.5) |>
@@ -242,9 +248,11 @@ modcnn2
 compile(modcnn2, loss="categorical_crossentropy", optimizer="rmsprop",
         metrics="accuracy")
 
-#' Train the model as for previous model. This larger model will take longer to
-#' train, 6-15 mins on CPU (20 seconds on a single NVidia A100 GPU, e.g. on a CU
-#' Alpine compute node).
+#' Train the model as for previous model. This larger model will take 4X longer
+#' to train on CPU: 5-30 mins. On GPU it's actually faster to train than the
+#' smaller model because of startup overhead and because we're training for
+#' fewer epochs (25 seconds on a single NVidia A100 GPU, e.g. on a CU Alpine
+#' compute node). The bigger the model, the greater the advantage of GPU.
 
 #+ eval=FALSE
 
@@ -266,7 +274,7 @@ plot(history, smooth=FALSE)
 
 #' This model has improved the predictive accuracy quite a bit but it's still
 #' only around 40%.
-
+#' 
 
 #' Plot a random selection of predictions. While the model is incorrect on many
 #' images, it is remarkable that it predicts many correctly (much better than
@@ -284,7 +292,8 @@ for ( i in selection ) {
     text(0, 26, paste("actual =", eco_labels$name[y_test[i,]+1]), col="red", pos=4)
 } 
 
-#' Predictions and overall accuracy on the hold out test set (about 41%)
+#' Predictions and overall accuracy on the hold out test set (about 41%, which
+#' agrees with the validation accuracy in training)
 
 pred_prob <- predict(modcnn2, x_test)
 pred_cat <- max.col(pred_prob) - 1  #subtract 1 because categories start at zero
@@ -292,7 +301,8 @@ mean(pred_cat == drop(y_test))      #drop converts 1D matrix to vector
 
 #' Plot probabilities for the same selection of test cases as above. For some
 #' images, multiple categories have high probability but for others a clear
-#' winner is identified.
+#' winner is identified. Nevertheless, the clear winner is not necessarily
+#' correct; the prediction can be confidently wrong!
 
 nr <- nrow(pred_prob)
 pred_prob |> 
