@@ -1,7 +1,7 @@
 Convolutional neural network
 ================
 Brett Melbourne
-04 Mar 2024 (updated 23 Feb 2026)
+04 Mar 2024 (updated 26 Feb 2026)
 
 To demonstrate a CNN, we are using a standard benchmark dataset,
 CIFAR100 but subsetted to images in ecological categories. These are
@@ -202,10 +202,12 @@ dim(y_train)
 
 Looking at some portions of the matrix (upper left 6x14; row 1) we see
 we have rows of zeros and ones, with a 1 in the column that represents
-the category of the organism in the image.
+the category of the organism in the image. In row 1, column 8 has a 1,
+which says that the image is category 7 (because of the offset indexing;
+column 1 is category 0), i.e. “cattle”.
 
 ``` r
-y_train[1:6,1:14] 
+y_train[1:6,1:14]
 ```
 
     ##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
@@ -217,7 +219,7 @@ y_train[1:6,1:14]
     ## [6,]    0    0    0    0    0    0    0    0    0     0     0     0     0     0
 
 ``` r
-y_train[1,] 
+y_train[1,]
 ```
 
     ##  [1] 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -272,16 +274,16 @@ the probability in each of the 56 categories.
 modcnn1 <- keras_model_sequential(input_shape=c(32,32,3)) |>
 #   1st convolution-pool layer sequence
     layer_conv_2d(filters=6, kernel_size=c(2,2), padding="same") |>
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |>
 #   2nd convolution-pool layer sequence    
     layer_conv_2d(filters=12, kernel_size=c(2,2), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
 #   3rd convolution-pool layer sequence    
     layer_conv_2d(filters=24, kernel_size=c(2,2), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
 #   Flatten (384 nodes)
     layer_flatten() |>
 #   Dense connection to output layer with softmax (56 categories to predict)    
@@ -301,21 +303,21 @@ modcnn1
     ## ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
     ## │ conv2d (Conv2D)                   │ (None, 32, 32, 6)        │            78 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu (ReLU)                      │ (None, 32, 32, 6)        │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d (MaxPooling2D)      │ (None, 16, 16, 6)        │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu (ReLU)                      │ (None, 16, 16, 6)        │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ conv2d_1 (Conv2D)                 │ (None, 16, 16, 12)       │           300 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu_1 (ReLU)                    │ (None, 16, 16, 12)       │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d_1 (MaxPooling2D)    │ (None, 8, 8, 12)         │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu_1 (ReLU)                    │ (None, 8, 8, 12)         │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ conv2d_2 (Conv2D)                 │ (None, 8, 8, 24)         │         1,176 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu_2 (ReLU)                    │ (None, 8, 8, 24)         │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d_2 (MaxPooling2D)    │ (None, 4, 4, 24)         │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu_2 (ReLU)                    │ (None, 4, 4, 24)         │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ flatten (Flatten)                 │ (None, 384)              │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
@@ -351,9 +353,13 @@ compile(modcnn1, loss="categorical_crossentropy", optimizer="rmsprop",
         metrics="accuracy")
 ```
 
-Train the model using an 80/20 train/validate split to monitor progress.
-This will take about 2 to 15 minutes on CPU, or about 15 seconds on a
-single NVidia A100 GPU (e.g. on a CU Alpine compute node).
+Train the model using an 80/20 train/validate split. The purpose of
+splitting the training data here is to monitor training progress. Right
+at the beginning above, we held out a separate test set that will not be
+involved in training, which we’ll use to measure out of sample accuracy.
+Training will take about 2 to 15 minutes on CPU (2s per epoch on my
+relatively fast laptop), or about 35 seconds on a single NVidia A100 GPU
+(e.g. on a CU Alpine compute node).
 
 ``` r
 fit(modcnn1, x_train, y_train, epochs=60, batch_size=128, 
@@ -391,20 +397,20 @@ tensorflow::set_random_seed(8424)
 modcnn2 <- keras_model_sequential(input_shape=c(32,32,3)) |>
     #   1st convolution-pool layer sequence
     layer_conv_2d(filters=32, kernel_size=c(3,3), padding="same") |>
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
     #   2nd convolution-pool layer sequence    
     layer_conv_2d(filters=64, kernel_size=c(3,3), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
     #   3rd convolution-pool layer sequence    
     layer_conv_2d(filters=128, kernel_size=c(3,3), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |> 
     #   4th convolution-pool layer sequence
     layer_conv_2d(filters=256, kernel_size=c(3,3), padding="same") |> 
-    layer_activation_relu() |> 
     layer_max_pooling_2d(pool_size=c(2,2)) |>
+    layer_activation_relu() |>
     #   Flatten with dropout regularization
     layer_flatten() |>
     layer_dropout(rate=0.5) |>
@@ -428,27 +434,27 @@ modcnn2
     ## ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
     ## │ conv2d_3 (Conv2D)                 │ (None, 32, 32, 32)       │           896 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu_3 (ReLU)                    │ (None, 32, 32, 32)       │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d_3 (MaxPooling2D)    │ (None, 16, 16, 32)       │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu_3 (ReLU)                    │ (None, 16, 16, 32)       │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ conv2d_4 (Conv2D)                 │ (None, 16, 16, 64)       │        18,496 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu_4 (ReLU)                    │ (None, 16, 16, 64)       │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d_4 (MaxPooling2D)    │ (None, 8, 8, 64)         │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu_4 (ReLU)                    │ (None, 8, 8, 64)         │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ conv2d_5 (Conv2D)                 │ (None, 8, 8, 128)        │        73,856 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu_5 (ReLU)                    │ (None, 8, 8, 128)        │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d_5 (MaxPooling2D)    │ (None, 4, 4, 128)        │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu_5 (ReLU)                    │ (None, 4, 4, 128)        │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ conv2d_6 (Conv2D)                 │ (None, 4, 4, 256)        │       295,168 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
-    ## │ re_lu_6 (ReLU)                    │ (None, 4, 4, 256)        │             0 │
-    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ max_pooling2d_6 (MaxPooling2D)    │ (None, 2, 2, 256)        │             0 │
+    ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
+    ## │ re_lu_6 (ReLU)                    │ (None, 2, 2, 256)        │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
     ## │ flatten_1 (Flatten)               │ (None, 1024)             │             0 │
     ## ├───────────────────────────────────┼──────────────────────────┼───────────────┤
@@ -483,9 +489,12 @@ compile(modcnn2, loss="categorical_crossentropy", optimizer="rmsprop",
         metrics="accuracy")
 ```
 
-Train the model as for previous model. This larger model will take
-longer to train, 6-15 mins on CPU (20 seconds on a single NVidia A100
-GPU, e.g. on a CU Alpine compute node).
+Train the model as for previous model. This larger model will take 4X
+longer to train on CPU: 5-30 mins. On GPU it’s actually faster to train
+than the smaller model because of startup overhead and because we’re
+training for fewer epochs (25 seconds on a single NVidia A100 GPU,
+e.g. on a CU Alpine compute node). The bigger the model, the greater the
+advantage of GPU.
 
 ``` r
 fit(modcnn2, x_train, y_train, epochs=30, batch_size=128, 
@@ -513,10 +522,12 @@ plot(history, smooth=FALSE)
 ![](08_3_convolutional_nnet_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 This model has improved the predictive accuracy quite a bit but it’s
-still only around 40%. Plot a random selection of predictions. While the
-model is incorrect on many images, it is remarkable that it predicts
-many correctly (much better than random guessing) and those that it gets
-wrong, you can often see how the image resembles the model’s prediction.
+still only around 40%.
+
+Plot a random selection of predictions. While the model is incorrect on
+many images, it is remarkable that it predicts many correctly (much
+better than random guessing) and those that it gets wrong, you can often
+see how the image resembles the model’s prediction.
 
 ``` r
 tensorflow::set_random_seed(4134)
@@ -531,47 +542,48 @@ for ( i in selection ) {
 } 
 ```
 
-    ## 1/1 - 0s - 125ms/step
+    ## 1/1 - 0s - 124ms/step
 
-    ## 1/1 - 0s - 36ms/step
+    ## 1/1 - 0s - 38ms/step
 
-    ## 1/1 - 0s - 44ms/step
+    ## 1/1 - 0s - 22ms/step
 
-    ## 1/1 - 0s - 49ms/step
+    ## 1/1 - 0s - 25ms/step
 
-    ## 1/1 - 0s - 46ms/step
-
-    ## 1/1 - 0s - 49ms/step
-
-    ## 1/1 - 0s - 47ms/step
-
-    ## 1/1 - 0s - 46ms/step
-
-    ## 1/1 - 0s - 49ms/step
-
-    ## 1/1 - 0s - 51ms/step
-
-    ## 1/1 - 0s - 48ms/step
-
-    ## 1/1 - 0s - 47ms/step
-
-    ## 1/1 - 0s - 48ms/step
-
-    ## 1/1 - 0s - 34ms/step
+    ## 1/1 - 0s - 22ms/step
 
     ## 1/1 - 0s - 35ms/step
 
-    ## 1/1 - 0s - 40ms/step
+    ## 1/1 - 0s - 34ms/step
+
+    ## 1/1 - 0s - 28ms/step
+
+    ## 1/1 - 0s - 17ms/step
+
+    ## 1/1 - 0s - 28ms/step
+
+    ## 1/1 - 0s - 20ms/step
+
+    ## 1/1 - 0s - 30ms/step
+
+    ## 1/1 - 0s - 27ms/step
+
+    ## 1/1 - 0s - 16ms/step
+
+    ## 1/1 - 0s - 28ms/step
+
+    ## 1/1 - 0s - 28ms/step
 
 ![](08_3_convolutional_nnet_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
-Predictions and overall accuracy on the hold out test set (about 41%)
+Predictions and overall accuracy on the hold out test set (about 41%,
+which agrees with the validation accuracy in training)
 
 ``` r
 pred_prob <- predict(modcnn2, x_test)
 ```
 
-    ## 175/175 - 2s - 13ms/step
+    ## 175/175 - 1s - 7ms/step
 
 ``` r
 pred_cat <- max.col(pred_prob) - 1  #subtract 1 because categories start at zero
@@ -582,7 +594,8 @@ mean(pred_cat == drop(y_test))      #drop converts 1D matrix to vector
 
 Plot probabilities for the same selection of test cases as above. For
 some images, multiple categories have high probability but for others a
-clear winner is identified.
+clear winner is identified. Nevertheless, the clear winner is not
+necessarily correct; the prediction can be confidently wrong!
 
 ``` r
 nr <- nrow(pred_prob)
