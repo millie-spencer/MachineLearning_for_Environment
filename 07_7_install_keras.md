@@ -34,10 +34,10 @@ Then open a terminal (on Windows 10/11 you want the miniconda terminal app) and 
 ```bash
 conda create --name py-tensorflow
 conda activate py-tensorflow
-conda install python=3.10 -c conda-forge
-python -m pip install "tensorflow==2.13.*" tensorflow-hub tensorflow-datasets scipy requests Pillow h5py pandas pydot matplotlib plotnine
+conda install python=3.12 -c conda-forge
+pip install tensorflow pandas matplotlib plotnine
 ```
 
-The last two lines are one command that installs many Python packages at once, including a couple of extra packages used in the class code (matplotlib, plotnine). It's necessary to use `pip install` within the conda environment, rather than use `conda install`, because the conda repositories don't have later versions of the tensorflow packages (at least not for Windows 10/11). You need to `pip install` all packages at once, otherwise later package installs could update keras and tensorflow as dependencies, which will break things. 
+The official tensorflow/keras install instructions advise using `pip install` within the conda environment, rather than use `conda install`, because the conda repositories are often not up to date. You need to `pip install` all packages at once, otherwise later package installs could update keras and tensorflow as dependencies, which will break things. 
 
 To use Keras and run the class Python code, within your IDE you need to start Python out of this environment before running code (e.g. in Positron, click `Start Session` and choose the `py-tensorflow` instance of Python).
