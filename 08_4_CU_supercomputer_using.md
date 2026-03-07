@@ -193,7 +193,9 @@ exit()
 
 I tend to leave the base conda environment alone and always create new environments to interact with. There are a number of different ways that one can set up conda environments. The most common approach, recommended by Research Computing, uses a slightly different strategy for setting up Python versus R environments.
 
+### Update warning message (ignore this)
 
+The conda installation and version is controlled by the system administrators of the supercomputer. The version installed might be older than the current version. Thus, when using conda you might often get the following message: `WARNING: A newer version of conda exists.` and to `Please update conda`. This is not something that you can do, as regular users do not have permission to write to the installation location, so please ignore the warning message.
 
 ### Python
 
