@@ -1,6 +1,6 @@
 # Install Keras
 
-Keras (Python package) is installed by installing Tensorflow. Keras recently updated from version 2 to version 3. We're going to install Keras version 3 for R because it's by far the smoothest installation and only minor updates are needed for the R code examples. For Python users (i.e. not via R), to keep everything stable and working with the textbook,  we'll install Keras version 2 (via Tensorflow version 2.13).
+Keras (Python package) is installed by installing Tensorflow. Keras recently updated from version 2 to version 3. These are the installation instructions for version 3. The examples in the textbook and many examples on the internet are for keras 2. For keras 2, you can use the installation instructions from last year [here](https://github.com/EBIO5460Spring2025/class-materials/blob/main/07_8_install_keras.md).
 
 
 
