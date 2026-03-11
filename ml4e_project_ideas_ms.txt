@@ -1,0 +1,17 @@
+## Millie's project idea ML4E
+
+* my plan is to do a coding project 
+* my goal is to train a machine learning model to identify glaciers from satellite imagery 
+* I've seen this done with Landsat, ASTER, and Sentinel, so I'm curious your thoughts on which might be best 
+* This has been done for select regions but I haven't found an open source code for replicating this type of work elsewhere
+* I'd love to eventually have an open source model that can be used to generate up to date glacier area estimates anywhere where imagery is available
+* For training data I have two datasets of Chilean glacier areas (from 2000 and 2019)
+* My idea is to train the model on satellite images from the same time period and withold some of the glacier areas for testing 
+* Ideally I could then use more recent satellite images and have the model produce glacier area estimates 
+* I think this would best be done with a neural network, and would be categorized as a classification task? Classifying land types as glacier vs not glacier (or maybe glacier, rock, veg, lake, etc)
+* the 2000 glacier area dataset (shapefiles for each glacier) is about 38 MB, assuming the 2019 one is about the same size 
+* Raster files for satellite images will be big im assuming, maybe best to start with a smaller area of Chile? 
+
+Excited to hear your thoughts and feedback! 
+Thanks,
+Millie 
