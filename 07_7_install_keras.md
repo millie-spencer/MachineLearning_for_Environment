@@ -1,6 +1,6 @@
 # Install Keras
 
-Keras (Python package) is installed by installing Tensorflow. Keras recently updated from version 2 to version 3. We're going to install Keras version 3 for R because it's by far the smoothest installation and only minor updates are needed for the R code examples. For Python users (i.e. not via R), to keep everything stable and working with the textbook,  we'll install Keras version 2 (via Tensorflow version 2.13).
+Keras (Python package) is installed by installing Tensorflow. Keras recently updated from version 2 to version 3. These are the installation instructions for version 3. The examples in the textbook and many examples on the internet are for keras 2. For keras 2, you can use the installation instructions from last year [here](https://github.com/EBIO5460Spring2025/class-materials/blob/main/07_8_install_keras.md).
 
 
 
@@ -34,10 +34,10 @@ Then open a terminal (on Windows 10/11 you want the miniconda terminal app) and 
 ```bash
 conda create --name py-tensorflow
 conda activate py-tensorflow
-conda install python=3.10 -c conda-forge
-python -m pip install "tensorflow==2.13.*" tensorflow-hub tensorflow-datasets scipy requests Pillow h5py pandas pydot matplotlib plotnine
+conda install python=3.12 -c conda-forge
+pip install tensorflow pandas matplotlib plotnine
 ```
 
-The last two lines are one command that installs many Python packages at once, including a couple of extra packages used in the class code (matplotlib, plotnine). It's necessary to use `pip install` within the conda environment, rather than use `conda install`, because the conda repositories don't have later versions of the tensorflow packages (at least not for Windows 10/11). You need to `pip install` all packages at once, otherwise later package installs could update keras and tensorflow as dependencies, which will break things. 
+The official tensorflow/keras install instructions advise using `pip install` within the conda environment, rather than use `conda install`, because the conda repositories are often not up to date. You need to `pip install` all packages at once, otherwise later package installs could update keras and tensorflow as dependencies, which will break things. 
 
 To use Keras and run the class Python code, within your IDE you need to start Python out of this environment before running code (e.g. in Positron, click `Start Session` and choose the `py-tensorflow` instance of Python).

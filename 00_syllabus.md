@@ -108,7 +108,8 @@ Assignments **35%**
 * Assignment 1: 7%
 * Assignment 2: 7%
 * Assignment 3: 7%
-* Assignment 4: 14%
+* Assignment 4: 7%
+* Assignment 5: 7%
 
 Discussion papers (written reflection and participation) **20%**
 
