@@ -1,0 +1,52 @@
+Week 10 Discussion: 
+
+Valavi R, Guillera-Arroita G, Lahoz-Monfort JJ, Elith J (2021). Predictive performance of presence-only species distribution models: a benchmark study with reproducible code. Ecological Monographs 0:e01486. https://doi.org/10.1002/ecm.1486.
+This is a case study using a range of machine learning algorithms, including random forest and boosting (but not deep learning)
+
+
+Questions to consider:
+Is the prediction task regression or classification?
+* classification, predicting presence or absence not a continuous number. But they also have a section talking about regression-based models so maybe Im wrong? I guess the task is classification while some of the models are regression-based?
+
+Describe the scope of inference.
+* dataset has 225 species from 6 regions, so I suppose the scope is the ability to guess presence/absence of these species in these regions? Since it's observational data you can only say associated with presence, not causal. Ability to use this model to infer species presence in diff regions or presence of other species is probably limited. 
+
+What data and context are the authors hoping to generalize from and to?
+* collecting new species data is difficult/expensive/time-intensive. Also, these models are used to make big management decisions. their hope is that researchers have the tools to select the most appropriate model (and fitting technique) and thus improve management outcomes. 
+
+What aspects of the work appear to be in distribution or in sample?
+* The training and testing data are for the same species and the same 6 regions, so that's in sample. However the training data is presence only (opportunistic, not recording absence) while the test data are presence-absence (less biased) so that I think would make it out of distribution? 
+
+Is there the possibility of test-set leakage?
+* "In addition to using biomod, we averaged several models to build our own “ensemble” model. We selected the component models before models were fitted and evaluated, and used no knowledge of the testing data set to select them." given this I think the answer is no? Also say "The 2006 NCEAS group did not allow access to the test species data at the model fitting stage, so all modelers chose settings “blind” to performance on the test set." 
+
+What general principles of machine learning algorithms are demonstrated among the models considered?
+* bias-variance tradeoff (how complex is good enough to see complex patterns but not so complex to create high variance?) 
+* controlling overfitting - don't just memorize training data and then fail on new data (use Lasso and MaxENT, e.g.)
+* Ensemble methods - combining many weak models to try to build a strong model 
+
+What modeling approaches were found to be best?
+* the 6 highest performing models were BRT, RF down-sampled, MaxEnt, MaxEnt-tuned, MaxNet, and Ensemble
+* they find that how you fit a model matters as much as which model you choose
+* ensemble methods seem to outperform single models if well-tuned 
+* no single best model though, depends on species and region and complexity 
+* tuning matters enormously, sometimes more than the choice of algorithm itself!!
+
+What is it about those algorithms that likely made them the best performers?
+* They're all nonparametric, enabling them to tackle complex non linear relationships
+* control for overfitting 
+
+Can the performance of any of the algorithms be improved (and likely by how much)?
+* yes, e.g. downsampling made the random forest model perform muc h better (from one of the worst to one of the best models)
+* weighting helped SVM a ton too 
+* careful tuning also helps, e.g. with Max-Ent 
+
+Why does downsampled random forest perform better than regular random forest? Would this affect other algorithms considered in the paper?
+* Regular RF sees far more background points than presences, so it learns to just predict "absent" most of the time
+* downsampling helps with this by giving each tree an equal # of presences and backgrounds forcing the tree to learn what distinguishes the too rather than just learning from absences 
+
+What could be the impact of the sizes of the datasets on the conclusions from this paper?
+* some species had very few presence records (like 5) meaning that some models might overfit on such sparse data 
+* also difference in survey sites between regions, e.g. <19,000 in NZ and only ~100 in AWT so model success may vary by region 
+
+Do you have any critiques of the paper, either methodological or about the conclusions drawn? 2-3 other bullet points, which might be insights or questions you want to raise in the discussion
