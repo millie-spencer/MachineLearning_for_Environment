@@ -1,0 +1,30 @@
+## MS discussion reflection 
+
+Dallas et al. (2016). Predictability of helminth parasite host range using information on geography, host traits and parasite community structure
+
+Research Qs: 
+* Given a parasite species, can you predict which host species it's capable of infecting (the "permissive host set")
+* Testing what info (eg. host traits, geography, community structure) are useful for predicting 
+
+Data: 
+* 38,000+ records of helminth (worm) parasites infecting fish, 562 diff parasite species 
+* many traits recorded per host fish, incuding what other parasites that fish is infected with 
+
+ML techniques: 
+* used boosted regression trees (like XGboost? kind of like what we did w NZ plant data?) - builds many weak decision trees sequentially, each correcting the errors of the last 
+* 70/30 train/test split 
+* missing covariate values were filled in using random forests 
+* unclear on imputation? ask in class. i think it means estimating missing values based on similar data that do exist? 
+* start with giant binary matrix (rows are rish host species, columns are parasite species. each cell is 0 not infected or 1 infected)
+* principal component analysis to reduce massive data matrix 
+* evaluated with AUC - how well does model rank true positives above background? 
+* only captured 27% of variance with 5 components - means the rest of the differences between host parasite communities is not captured
+* assessed variable importance via permutation - how much does variable X actually matter to the model? 
+* like that their data and code are open source
+
+Findings: 
+* most powerful predictor was parasite community structure - what other parasites the host is already infected with 
+* who your neighbors are (co-infecting parasites) predicts host range better than what you are (host traits)
+* geography not nearly as powerful 
+* conclude that this means that parasite communities are non-random, possible interactins btw parasite species or shared biological constraints 
+
