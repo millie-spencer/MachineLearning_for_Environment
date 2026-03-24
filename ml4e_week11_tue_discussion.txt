@@ -1,4 +1,5 @@
 ## MS discussion reflection 
+# ML4e 03/24/26
 
 Dallas et al. (2016). Predictability of helminth parasite host range using information on geography, host traits and parasite community structure
 
@@ -11,7 +12,7 @@ Data:
 * many traits recorded per host fish, incuding what other parasites that fish is infected with 
 
 ML techniques: 
-* used boosted regression trees (like XGboost? kind of like what we did w NZ plant data?) - builds many weak decision trees sequentially, each correcting the errors of the last 
+* model algo: used boosted regression trees (like XGboost? kind of like what we did w NZ plant data?) - builds many weak decision trees sequentially, each correcting the errors of the last 
 * 70/30 train/test split 
 * missing covariate values were filled in using random forests 
 * unclear on imputation? ask in class. i think it means estimating missing values based on similar data that do exist? 
@@ -25,6 +26,6 @@ ML techniques:
 Findings: 
 * most powerful predictor was parasite community structure - what other parasites the host is already infected with 
 * who your neighbors are (co-infecting parasites) predicts host range better than what you are (host traits)
-* geography not nearly as powerful 
+* geography not as powerful 
+* host traits was the worst (lowest single covariate AUC=0.69, SE=0.007)
 * conclude that this means that parasite communities are non-random, possible interactins btw parasite species or shared biological constraints 
-
